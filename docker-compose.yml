@@ -1,0 +1,27 @@
+services:
+  postgres-quiz:
+      image: bitnami/postgresql:latest
+      ports:
+        - '5432:5432'
+      restart: always
+      environment:
+        POSTGRES_USER: docker
+        POSTGRES_PASSWORD: docker
+        POSTGRES_DB: api_back
+      volumes:
+        - pgdata:/bitnami/postgresql/data
+
+  backend-quiz:
+      container_name: api-quiz
+      build: ./back
+      restart: always
+      ports:
+        - "3000:3000"
+      volumes:
+        - ./backend:/app
+      depends_on:
+        - postgres-quiz
+      env_file:
+        - ./back/.env
+volumes:
+  pgdata:
