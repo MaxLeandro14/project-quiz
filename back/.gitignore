@@ -1,0 +1,12 @@
+pids
+.pid
+.seed
+.pid.lock
+.env
+.env*.local
+!.env.example
+node_modules
+vars
+**/*node_modules
+dist/
+build/
