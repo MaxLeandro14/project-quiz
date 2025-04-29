@@ -1,12 +1,10 @@
 FROM node:18
+WORKDIR /back
 
-WORKDIR /api
+COPY package*.json ./
+RUN npm install
 
 COPY . .
 
-RUN rm -rf node_modules
-RUN npm i
-
 CMD ["npm", "run", "dev"]
-
 EXPOSE 5002

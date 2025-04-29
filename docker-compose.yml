@@ -1,6 +1,6 @@
 services:
   postgres-quiz:
-      image: bitnami/postgresql:latest
+      image: ankane/pgvector
       ports:
         - '5432:5432'
       restart: always
@@ -10,18 +10,19 @@ services:
         POSTGRES_DB: api_back
       volumes:
         - pgdata:/bitnami/postgresql/data
+        - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
-  backend-quiz:
-      container_name: api-quiz
-      build: ./back
-      restart: always
-      ports:
-        - "3000:3000"
-      volumes:
-        - ./backend:/app
-      depends_on:
-        - postgres-quiz
-      env_file:
-        - ./back/.env
+ # backend-quiz:
+ #     container_name: api-quiz
+ #     build: ./back
+ #     restart: always
+ #     ports:
+ #       - "3000:3000"
+ #     volumes:
+ #       - ./back:/data
+ #     depends_on:
+ #       - postgres-quiz
+ #     env_file:
+ #       - ./back/.env
 volumes:
   pgdata:
