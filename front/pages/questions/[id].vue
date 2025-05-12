@@ -1,87 +1,130 @@
 <template>
   <div class="quiz-container">
     <div class="container-warap">
-      
-      <div class="question-card__header">
-        <Button icon="pi pi-heart" severity="help" variant="text" rounded aria-label="Favorite" />
-        <Button icon="pi pi-heart" severity="help" variant="text" rounded aria-label="Favorite" />
-        <Button icon="pi pi-heart" severity="help" variant="text" rounded aria-label="Favorite" />
-      </div>
+      <div class="progress-container__header">
+        <div class="progress-container">
+          <div
+            v-for="(q, i) in questions"
+            :key="i"
+            :class="[
+              'progress-step', {
+              completed: confirmedAnswers[i] !== null && i !== currentQuestionIndex,
+              current: i === currentQuestionIndex,
+              pending: confirmedAnswers[i] === null && i !== currentQuestionIndex
+            }]"
+             v-tooltip.bottom="{
+                value: `Questão ${i+1}`,
+                pt: {
+                  root: { class: 'custom-tooltip' },
+                  arrow: { class: 'custom-tooltip-arrow' }
+                }
+              }"
+              @click="goToQuestion(i)"
+          ></div>
+        </div>
 
-      <div v-if="questions.length > 0" class="question-card">
-      <!--<div class="progress">
-        Progresso: {{ currentQuestionIndex + 1 }} / {{ questions.length }}
-      </div>-->
-      
+        <div class="progress-container__header__options">
+          <div>
+            <i class="pi pi-comments" style="font-size: 1rem"></i>
+          </div>
 
-      <div class="question-text">{{ currentQuestion.question }}</div>
-
-      <!-- Exibe a resposta apenas depois da confirmação -->
-      <div v-if="confirmedAnswers[currentQuestionIndex]" class="answer-display">
-        <strong>Sua resposta:</strong> {{ formatAnswer(confirmedAnswers[currentQuestionIndex]) }}
-      </div>
-
-      <!-- Multiple Choice -->
-      <div v-if="currentQuestion.type === 'MULTIPLA_ESCOLHA'" class="options-container">
-        <div 
-          v-for="option in currentQuestion.options" 
-          :key="option.option"
-          @click="!confirmedAnswers[currentQuestionIndex] && selectOption(option.option)"
-          :class="[
-            'option-button', 
-            { 
-              active: selectedOption === option.option && !confirmedAnswers[currentQuestionIndex],
-              selected: confirmedAnswers[currentQuestionIndex] === option.option,
-              disabled: confirmedAnswers[currentQuestionIndex]
-            }
-          ]"
-        >
-          <span class="option-letter">{{ option.option }}</span> {{ option.text }}
-          <span v-if="confirmedAnswers[currentQuestionIndex] === option.option" class="check-mark">✓</span>
+          <div>
+            <i class="pi pi-chart-line" style="font-size: 1rem"></i>
+          </div>
+          
+          <div>
+            <Button type="button" variant="text" icon="pi pi-ellipsis-v" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" />
+            <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
+          </div>
         </div>
       </div>
+    
 
-      <!-- True/False -->
-      <div v-if="currentQuestion.type === 'VERDADEIRO_FALSO'" class="options-container">
-        <button 
-          @click="!confirmedAnswers[currentQuestionIndex] && selectOption('true')" 
-          :class="[
-            'option-button',
-            {
-              active: selectedOption === 'true' && !confirmedAnswers[currentQuestionIndex],
-              selected: confirmedAnswers[currentQuestionIndex] === 'true',
-              disabled: confirmedAnswers[currentQuestionIndex]
-            }
-          ]"
-        >
-          Verdadeiro
-          <span v-if="confirmedAnswers[currentQuestionIndex] === 'true'" class="check-mark">✓</span>
-        </button>
-        <button 
-          @click="!confirmedAnswers[currentQuestionIndex] && selectOption('false')" 
-          :class="[
-            'option-button',
-            {
-              active: selectedOption === 'false' && !confirmedAnswers[currentQuestionIndex],
-              selected: confirmedAnswers[currentQuestionIndex] === 'false',
-              disabled: confirmedAnswers[currentQuestionIndex]
-            }
-          ]"
-        >
-          Falso
-          <span v-if="confirmedAnswers[currentQuestionIndex] === 'false'" class="check-mark">✓</span>
-        </button>
-      </div>
+      <div v-if="questions.length > 0" class="question-card">
 
-      <!-- Explicativa -->
-      <div v-if="currentQuestion.type === 'EXPLICATIVA'" class="explanatory-container">
-        <textarea 
-          v-model="selectedOption.value" 
-          placeholder="Digite sua resposta aqui..."
-          class="answer-textarea"
-          :disabled="confirmedAnswers[currentQuestionIndex]"
-        ></textarea>
-      </div>
+          <div class="question-conteiner">
+            <div class="question-conteiner__qt">Pergunta: {{ currentQuestionIndex + 1 }} / {{ questions.length }}</div>
+            <div>{{ currentQuestion.question }}</div>
+          </div>
+
+          <div class="question-response">
+            <!-- Exibe a resposta apenas depois da confirmação -->
+            <div v-if="confirmedAnswers[currentQuestionIndex] && formatAnswer(confirmedAnswers[currentQuestionIndex].correctAnswer) !== formatAnswer(confirmedAnswers[currentQuestionIndex]?.selected)" class="answer-display">
+              <!-- Feedback da resposta -->
+              <div class="answer-feedback">
+                <div class="correct-answer">
+                  <strong>Resposta correta:</strong> {{ formatAnswer(confirmedAnswers[currentQuestionIndex].correctAnswer) }}
+                </div>
+                <div v-if="confirmedAnswers[currentQuestionIndex].explanation" class="explanation">
+                  <strong>Explicação:</strong>
+                  {{ findCorrectAnswer(confirmedAnswers[currentQuestionIndex].correctAnswer) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Multiple Choice -->
+            <div v-if="currentQuestion.type === 'MULTIPLA_ESCOLHA'" class="options-container">
+              <div 
+                v-for="option in currentQuestion.options" 
+                :key="option.option"
+                @click="!confirmedAnswers[currentQuestionIndex] && selectOption(option.option)"
+                :class="[
+                  'option-button', 
+                  { 
+                    active: selectedOption === option.option && !confirmedAnswers[currentQuestionIndex],
+                    selected: confirmedAnswers[currentQuestionIndex]?.selected === option.option,
+                    disabled: confirmedAnswers[currentQuestionIndex]
+                  }
+                ]"
+              >
+                <span class="option-letter">{{ option.option }}</span> {{ option.text }}
+                <span v-if="confirmedAnswers[currentQuestionIndex]?.correctAnswer === option.option" class="check-mark">✓</span>
+              </div>
+            </div>
+
+            <!-- True/False -->
+            <div v-if="currentQuestion.type === 'VERDADEIRO_FALSO'" class="options-container">
+              <span 
+                @click="!confirmedAnswers[currentQuestionIndex] && selectOption('true')" 
+                :class="[
+                  'option-button',
+                  {
+                    active: selectedOption === 'true' && !confirmedAnswers[currentQuestionIndex],
+                    selected: confirmedAnswers[currentQuestionIndex]?.selected === 'true',
+                    disabled: confirmedAnswers[currentQuestionIndex]
+                  }
+                ]"
+              >
+                <span class="option-letter">A</span> Verdadeiro
+                <span v-if="String(confirmedAnswers[currentQuestionIndex]?.correctAnswer) === 'true'" class="check-mark">✓</span>
+              </span>
+              <span 
+                @click="!confirmedAnswers[currentQuestionIndex] && selectOption('false')" 
+                :class="[
+                  'option-button',
+                  {
+                    active: selectedOption === 'false' && !confirmedAnswers[currentQuestionIndex],
+                    selected: confirmedAnswers[currentQuestionIndex]?.selected === 'false',
+                    disabled: confirmedAnswers[currentQuestionIndex]
+                  }
+                ]"
+              >
+                <span class="option-letter">B</span> Falso
+                <span v-if="String(confirmedAnswers[currentQuestionIndex]?.correctAnswer) === 'false'" class="check-mark">✓</span>
+              </span>
+            </div>
+
+             <!-- Explicativa -->
+            <div v-if="currentQuestion.type === 'EXPLICATIVA'" class="explanatory-container">
+              <textarea 
+                v-model="selectedOption.value" 
+                placeholder="Digite sua resposta aqui..."
+                class="answer-textarea"
+                :disabled="confirmedAnswers[currentQuestionIndex]"
+              ></textarea>
+            </div>
+            
+        </div>
       </div>
 
       <div class="question-card__like">
@@ -101,9 +144,11 @@
       :currentIndex="currentQuestionIndex" 
       :totalQuestions="questions.length"
       :isConfirmMode="isConfirmMode"
+      :allQuestionsAnswered="allQuestionsAnswered"
       @prev="goToPreviousQuestion"
       @next="handleNext"
       @confirm="confirmAnswer"
+      @finish="handleFinish"
     />
   </div>
 </template>
@@ -121,8 +166,25 @@ const currentQuestionIndex = ref(0)
 const selectedOption = ref("")
 const confirmedAnswers = ref([])
 const isConfirmMode = ref(false)
+const answerFeedback = ref(null);
 
 const currentQuestion = computed(() => questions.value[currentQuestionIndex.value])
+const progress = computed(() => ((currentQuestionIndex.value + 1) / questions.value.length * 100).toFixed(2))
+
+const allQuestionsAnswered = computed(() => {
+  return confirmedAnswers.value.every(answer => answer !== null)
+})
+
+function handleFinish() {
+  console.log('Todas as questões respondidas!', confirmedAnswers.value)
+}
+const goToQuestion = (index) => {
+  if (index === currentQuestionIndex.value) return;
+  
+  currentQuestionIndex.value = index;
+  selectedOption.value = confirmedAnswers.value[index] || "";
+  isConfirmMode.value = false;
+};
 
 function selectOption(option) {
   selectedOption.value = option
@@ -131,8 +193,10 @@ function selectOption(option) {
 
 function confirmAnswer() {
   if (selectedOption.value) {
-    confirmedAnswers.value[currentQuestionIndex.value] = selectedOption.value
+    console.log('selectedOption.value', selectedOption.value)
+    // confirmedAnswers.value[currentQuestionIndex.value] = selectedOption.value
     isConfirmMode.value = false
+    checkAnswer()
   }
 }
 
@@ -150,6 +214,24 @@ function goToPreviousQuestion() {
     selectedOption.value = confirmedAnswers.value[currentQuestionIndex.value] || ""
     isConfirmMode.value = false
   }
+}
+
+function findCorrectAnswer(correctAnswer) {
+  console.log('correctAnswer', correctAnswer)
+   const currentQuestion = confirmedAnswers.value[currentQuestionIndex.value];
+    
+    if (!currentQuestion || !currentQuestion.explanation) {
+        console.log('Questão inválida ou não encontrada')
+        return '--';
+    }
+
+    if (Array.isArray(currentQuestion.explanation)) {
+        const found = currentQuestion.explanation.find(item => item.option === currentQuestion.correctAnswer);
+        
+        return found ? found.explanation : currentQuestion.explanation[0]?.explanation || 'Explicação não disponível';
+    }
+
+    return currentQuestion.explanation || 'Explicação não disponível';
 }
 
 function formatAnswer(answer) {
@@ -170,6 +252,49 @@ async function fetchQuestions() {
   }
 }
 
+async function checkAnswer() {
+  try {
+    const currentQ = currentQuestion.value;
+    console.log('currentQ', currentQ);
+    const params = {
+        "question_id": currentQ.id,
+        "user_answer": confirmedAnswers.value[currentQuestionIndex.value]
+      }
+    const response = await questionService.checkAnswer(params)
+    console.log('response',response.data)
+    confirmedAnswers.value[currentQuestionIndex.value] = {selected: selectedOption.value, ...response.data}
+
+    console.log('confirmedAnswers.value', confirmedAnswers.value)
+    
+    return;
+
+  } catch (err) {
+    console.error('Erro ao buscar resposta', err)
+  }
+}
+
+/* menu more options*/
+const menu = ref();
+const items = ref([
+    {
+        label: 'Options',
+        items: [
+            {
+                label: 'Refresh',
+                icon: 'pi pi-refresh'
+            },
+            {
+                label: 'Export',
+                icon: 'pi pi-upload'
+            }
+        ]
+    }
+]);
+
+const toggle = (event) => {
+    menu.value.toggle(event);
+};
+/*  */
 onMounted(fetchQuestions)
 </script>
 
@@ -184,7 +309,6 @@ onMounted(fetchQuestions)
 .quiz-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 73px);
   overflow: auto;
 }
 
@@ -196,13 +320,28 @@ onMounted(fetchQuestions)
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-top: 56px;
   overflow-y: auto;
-}
+  display: flex;
+  gap: 15px;
 
-.question-text {
-  font-size: 1.5rem;
+  .question-conteiner {
+  font-size: 1rem;
   margin-bottom: 1.5rem;
   color: #2c3e50;
+  flex: 1;
+
+  .question-conteiner__qt {
+    font-size: 0.9rem;
+    color: #ef4141;
+    margin-bottom: 11px;
+  }
 }
+
+  .question-response {
+    flex: 1;
+}
+}
+
+
 
 .progress {
   margin-bottom: 1.5rem;
@@ -280,6 +419,7 @@ onMounted(fetchQuestions)
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-top: 15px;
 }
 
 .answer-textarea {
@@ -378,8 +518,75 @@ onMounted(fetchQuestions)
   margin: 1.5rem 0;
 }
 
+.check-mark {
+  color: #508f45;
+}
+
 .restart-button {
   margin-top: 1rem;
+}
+
+.progress-container__header {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 5px;
+    border-radius: 7px;
+    border: 1px solid #f7f4f4;
+    padding: 5px;
+    margin-top: 10px;
+}
+.progress-container {
+  display: flex;
+  gap: 6px;
+  padding: 10px;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+}
+
+.progress-step {
+  flex: 1;
+  height: 10px;
+  background-color: #ddd;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  max-width: 16px;
+  background-color: #ccc; // cinza por padrão
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+
+/* Passo concluído */
+.progress-step.completed {
+  background-color: #f1c40f;
+}
+
+.progress-step.pending {
+  background-color: #ccc; // cinza
+}
+
+.progress-container__header__options {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+.custom-tooltip {
+  background: white !important;
+  color: black !important;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.answer-feedback {
+    margin-bottom: 12px;
+}
+
+/* Passo atual */
+.progress-step.current {
+  background: #ffce00;
 }
 
 @media (min-width: 768px) {
@@ -391,5 +598,23 @@ onMounted(fetchQuestions)
   }
 }
 
+@media (max-width: 874px) {
+  .question-card{
+      flex-direction: column;
+  }
+}
+
+@media (max-width: 500px) {
+  .question-card {
+    margin-top: 22px;
+  }
+  .progress-container__header__options{
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .progress-container{
+    display: none !important;
+  }
+}
 </style>
   

@@ -22,7 +22,7 @@ export const questionService = {
     return api.get(`/questions/${materialId}`);
   },
 
-  checkAnswer(payload:any) {
+  checkAnswer(payload: any) {
     return api.post('/check-answer', payload);
   },
 

@@ -38,19 +38,17 @@ export const checkAnswer = async (req, res) => {
       let explanation = null;
   
       if (question.type === 'VERDADEIRO_FALSO') {
-        isCorrect = question.is_correct_v_f === user_answer;
+        console.log('String(question.is_correct_v_f)', String(question.is_correct_v_f))
+        console.log('String(user_answer)', String(user_answer))
+        isCorrect = String(question.is_correct_v_f) === String(user_answer);
         correctAnswer = question.is_correct_v_f;
         explanation = question.explanation || null;
-      }
-  
-      else if (question.type === 'MULTIPLA_ESCOLHA') {
+      } else if (question.type === 'MULTIPLA_ESCOLHA') {
         const correctOpt = question.correct_opt;
-        isCorrect = correctOpt === user_answer;
+        isCorrect = String(correctOpt) === String(user_answer);
         correctAnswer = correctOpt;
         explanation = question.explanation || null;
-      }
-  
-      else if (question.type === 'EXPLICATIVA') {
+      } else if (question.type === 'EXPLICATIVA') {
         isCorrect = null; // Avaliação manual
         correctAnswer = null;
         explanation = question.explanation || null;
