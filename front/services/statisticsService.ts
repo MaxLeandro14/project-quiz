@@ -18,16 +18,7 @@ api.interceptors.request.use(config => {
 });
 
 export default {
-  getQuestionsByMaterialId(materialId:string) {
-    return api.get(`/questions/${materialId}`);
-  },
-
-  checkAnswer(payload: any) {
-    return api.post('/check-answer', payload);
-  },
-
-  likeQuestion(questionId:any) {
-    return api.post(`/questions/${questionId}/like`);
+  getUserAnswersByMaterial(materialId:string) {
+    return api.get(`/report/${materialId}`);
   }
 };
-

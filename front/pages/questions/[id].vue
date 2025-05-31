@@ -155,11 +155,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { questionService } from '@/services/questionService'
+import { useRoute, useRouter } from 'vue-router'
+import questionService from '@/services/questionService'
 import FooterQuestion from '@/components/questions/FooterQuestion.vue'
 
 const route = useRoute()
+const router = useRouter()
 
 const questions = ref([])
 const currentQuestionIndex = ref(0)
@@ -176,7 +177,9 @@ const allQuestionsAnswered = computed(() => {
 })
 
 function handleFinish() {
-  console.log('Todas as questões respondidas!', confirmedAnswers.value)
+  const reportId = route.params.id;
+  if(!reportId) return;
+  router.push(`/questions/report/${reportId}`)
 }
 const goToQuestion = (index) => {
   if (index === currentQuestionIndex.value) return;

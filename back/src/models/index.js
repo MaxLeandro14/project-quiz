@@ -88,4 +88,7 @@ SavedRooms.belongsTo(Room, {
 //Room.belongsToMany(Tag, { through: 'room_tags', foreignKey: 'room_id' });
 //Tag.belongsToMany(Room, { through: 'room_tags', foreignKey: 'tag_id' });
 
+UserAnswers.belongsTo(Question, { foreignKey: 'question_id' });
+Question.hasMany(UserAnswers, { foreignKey: 'question_id' });
+
 export { sequelize, User, Room, Materials };

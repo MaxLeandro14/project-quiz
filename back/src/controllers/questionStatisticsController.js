@@ -290,19 +290,18 @@ export const getUserAnswersByMaterial = async (req, res) => {
     const { materialId } = req.params;
 
     const user_id = '3cdc152f-b12d-4c67-a552-817e32d56fc7';
-      if (!user_id) {
-        throw new Error("Usuário não autenticado.");
-      }
+    if (!user_id) {
+      throw new Error("Usuário não autenticado.");
+    }
 
-    // Buscar todas as perguntas e as respostas do usuário no material
     const answers = await UserAnswer.findAll({
       include: [{
         model: Question,
         where: { material_id: materialId },
-        attributes: ['id', 'enunciado', 'correct_answer']
+        attributes: ['id', 'question', 'type', 'correct_opt', 'is_correct_v_f', 'explanation']
       }],
-      where: { user_id: user_id },
-      attributes: ['user_answer', 'is_correct'],
+      where: { user_id },
+      attributes: ['choose', 'is_correct'],
       raw: true
     });
 
@@ -310,15 +309,57 @@ export const getUserAnswersByMaterial = async (req, res) => {
       return res.status(404).json({ message: 'Nenhuma resposta encontrada para este usuário neste material.' });
     }
 
-    const resultado = answers.map(a => ({
-      question_id: a['Question.id'],
-      enunciado: a['Question.enunciado'],
-      resposta_correta: a['Question.correct_answer'],
-      resposta_usuario: a.user_answer,
-      acertou: a.is_correct
-    }));
+    const result = answers.map(a => {
+      let correctAnswer = null;
+      const type = a['Question.type'];
 
-    return res.json({ respostas: resultado });
+      if (type === 'VERDADEIRO_FALSO') {
+        correctAnswer = a['Question.is_correct_v_f'];
+      } else if (type === 'MULTIPLA_ESCOLHA') {
+        correctAnswer = a['Question.correct_opt'];
+      }
+
+      return {
+        question_id: a['Question.id'],
+        statement: a['Question.question'],
+        type: type,
+        user_answer: a.choose,
+        correct_answer: correctAnswer,
+        is_correct: a.is_correct
+      };
+    });
+
+    const totalQuestions = result.length;
+    const correctAnswers = result.filter(q => q.is_correct).length;
+    const wrongAnswers = totalQuestions - correctAnswers;
+    const performance = ((correctAnswers / totalQuestions) * 100).toFixed(2); // como string com 2 decimais
+
+     // Estatísticas por tipo de questão
+    const types = ['MULTIPLA_ESCOLHA', 'VERDADEIRO_FALSO'];
+    const accuracyByType = {};
+
+    types.forEach(type => {
+      const filtered = result.filter(q => q.type === type);
+      const total = filtered.length;
+      const correct = filtered.filter(q => q.is_correct).length;
+      accuracyByType[type] = {
+        total,
+        correct,
+        wrong: total - correct,
+        performance: total ? parseFloat(((correct / total) * 100).toFixed(2)) : 0
+      };
+    });
+
+    return res.json({
+      question: result,
+      stats: {
+        total: totalQuestions,
+        correct: correctAnswers,
+        wrong: wrongAnswers,
+        performance: parseFloat(performance),
+        by_type: accuracyByType
+      }
+    });
   } catch (error) {
     console.error('Erro ao obter respostas do usuário:', error);
     return res.status(500).json({ message: 'Erro interno do servidor.' });

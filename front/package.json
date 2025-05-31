@@ -17,6 +17,7 @@
     "@primevue/nuxt-module": "^4.3.3",
     "@vueuse/core": "^13.1.0",
     "axios": "^1.8.4",
+    "chart.js": "^4.4.9",
     "nuxt": "^3.16.2",
     "pinia": "^3.0.2",
     "primeicons": "^7.0.0",
