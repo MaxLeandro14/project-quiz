@@ -194,7 +194,7 @@ function selectOption(option) {
 function confirmAnswer() {
   if (selectedOption.value) {
     console.log('selectedOption.value', selectedOption.value)
-    // confirmedAnswers.value[currentQuestionIndex.value] = selectedOption.value
+    confirmedAnswers.value[currentQuestionIndex.value] = selectedOption.value
     isConfirmMode.value = false
     checkAnswer()
   }
@@ -246,7 +246,16 @@ async function fetchQuestions() {
     const materialId = route.params.id
     const response = await questionService.getQuestionsByMaterialId(materialId)
     questions.value = response.data
-    confirmedAnswers.value = new Array(response.data.length).fill(null)
+
+    confirmedAnswers.value = response.data.map(item =>
+        item.user_answer !== null
+          ? { ...item, selected: item.user_answer }
+          : null
+      );
+    selectedOption.value = confirmedAnswers.value[0] || "";
+
+    console.log('confirmedAnswers', confirmedAnswers)
+    console.log('selectedOption', selectedOption.value)
   } catch (err) {
     console.error('Erro ao carregar perguntas:', err)
   }
@@ -595,6 +604,12 @@ onMounted(fetchQuestions)
       line-height: 23px;
       min-width: 25px;
       width: 25px;
+  }
+}
+
+@media (min-width: 874px) {
+  .question-card{
+      min-height: 400px;
   }
 }
 

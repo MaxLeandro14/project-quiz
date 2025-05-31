@@ -7,7 +7,7 @@ import { generateQuestionsFromYoutube } from "./controllers/questionYouTubeContr
 import { uploadDocument } from "./controllers/questionDocumentController.js";
 import { linkDocument } from "./controllers/questionLinkController.js";
 import { questions, checkAnswer } from "./controllers/questionsController.js";
-import { performance, averagePerformancePorMaterial, compareQuestPerformance, performanceSummary, getTopQuestionsByMaterial, getMaterialSummary } from "./controllers/questionStatisticsController.js";
+import { performance, averagePerformancePorMaterial, compareQuestPerformance, performanceSummary, getTopQuestionsByMaterial, getMaterialSummary, getUserAnswersByMaterial } from "./controllers/questionStatisticsController.js";
 import { createRoom, editRoom, getRoomDetails, getUserRooms, getRoomsAll, getRoomByCode, generateNewRoomCode, deleteRoom } from "./controllers/roomController.js";
 import { commentQuestion, getCommentsQuestion, getUserComments, deleteCommentQuestion } from './controllers/commentsController.js'
 import { saveRoom, getSavedRooms, removeSavedRoom } from "./controllers/savedRoomsController.js";
@@ -39,6 +39,7 @@ routes.get("/compare/:questionId", compareQuestPerformance);
 routes.get("/performance-summary/:materialId", performanceSummary);
 routes.get('/stats/material/:materialId/top-questions', getTopQuestionsByMaterial);
 routes.get('/stats/material/:materialId/summary', getMaterialSummary);
+routes.get('/report/:materialId', getUserAnswersByMaterial);
 
 //room
 routes.post('/room/create', authenticateJWT, createRoom);

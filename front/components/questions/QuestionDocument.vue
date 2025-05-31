@@ -69,14 +69,8 @@
       console.log("file", file)
       const result = await generateService.fromDocument(file)
   
-      toast.add({
-        severity: "success",
-        summary: "Sucesso",
-        detail: "Arquivo enviado com sucesso!",
-        life: 3000
-      })
       console.log('result', result)
-      
+
       if(result.id_material){
         router.push({ path: `/questions/${result.id_material}` })
       }

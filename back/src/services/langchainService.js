@@ -15,6 +15,7 @@ const model = new ChatOpenAI({
   temperature: 0.7,
 });
 
+/*
 const template = (config) => {
   return `
 Você é um especialista em criação de perguntas e título. Sua tarefa é gerar um **título** e  ${config.totalQuestion} **perguntas** com base no conteúdo fornecido, a quantidade de perguntas são divididas de acordo com os tipos abaixo:
@@ -79,7 +80,62 @@ Gere **exatamente ${config.totalQuestion} perguntas** baseado no seguinte conte�
 {context}
 `
 };
+*/
+const template = (config) => {
+  return `
+Você é um especialista em elaboração de **títulos** e **questões avaliativas**. Sua tarefa é gerar um **título relevante** e um conjunto de perguntas baseadas no conteúdo fornecido, obedecendo às quantidades e formatos indicados a seguir:
 
+### **Tipos**:
+- **MULTIPLA_ESCOLHA:** Gere ${config.multipleChoice || 5} perguntas.
+- **VERDADEIRO_FALSO:** Gere ${config.trueFalse || 2} perguntas.
+
+**Formato obrigatório de cada tipo de pergunta:**
+- **MULTIPLA_ESCOLHA:** Deve conter 4 opções e apenas uma correta. Cada opção deve ter uma explicação do porquê está correta ou errada.
+- **VERDADEIRO_FALSO:** Duas opções ("Verdadeiro" e "Falso"), apenas uma correta, e deve conter uma explicação para justificar a resposta correta e por que a errada está errada.
+
+### **Instruções Importantes**:
+1. **Siga exatamente a quantidade de perguntas exigidas**.
+2. **Gere um título relevante e obrigatório para o conjunto de perguntas.**
+
+Organize as perguntas e o titulo no seguinte formato JSON:
+
+\`\`\`json
+"title": "Título gerado com base no conteúdo",
+"questions":
+[
+  {{
+    "question": "Pergunta aqui",
+    "type": "MULTIPLA_ESCOLHA",
+    "correct_opt": "A",
+    "options": [
+      {{ "text": "Opção A", "option": "A" }},
+      {{ "text": "Opção B", "option": "B" }},
+      {{ "text": "Opção C", "option": "C" }},
+      {{ "text": "Opção D", "option": "D" }}
+    ],
+    "explanation": [
+      {{ "option": "A", "explanation": "Explicação do porquê essa opção opção é correta." }},
+      {{ "option": "B", "explanation": "Explicação do porquê essa opção está errada." }},
+      {{ "option": "C", "explanation": "Explicação do porquê essa opção está errada." }},
+      {{ "option": "D", "explanation": "Explicação do porquê essa opção está errada." }}
+    ]
+  }},
+  {{
+    "question": "Pergunta aqui",
+    "type": "VERDADEIRO_FALSO",
+    "is_correct_v_f": false,
+    "explanation": [
+      {{ "explanation": "Explicação do porquê essa opção está errada." }}
+    ]
+  }}
+]
+\`\`\`
+
+Gere **exatamente ${config.totalQuestion} perguntas** baseado no seguinte conteúdo:
+
+{context}
+`
+};
 export const generateQuestions = async (documents, config) => {
   console.log('config', config)
   const templateQuestion = template(config);

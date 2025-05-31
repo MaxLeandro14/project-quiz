@@ -1,6 +1,7 @@
 import Sequelize from 'sequelize';
 import QuestionStatistics from '../models/QuestionStatistics.js';
 import Question from '../models/Question.js';
+import UserAnswer from '../models/UserAnswers.js';
 
 // Rota para obter o percentual de acerto de uma questão específica
 ///GET performance/:questionId
@@ -280,6 +281,46 @@ export const getMaterialSummary = async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao gerar resumo do material:', error);
+    return res.status(500).json({ message: 'Erro interno do servidor.' });
+  }
+};
+
+export const getUserAnswersByMaterial = async (req, res) => {
+  try {
+    const { materialId } = req.params;
+
+    const user_id = '3cdc152f-b12d-4c67-a552-817e32d56fc7';
+      if (!user_id) {
+        throw new Error("Usuário não autenticado.");
+      }
+
+    // Buscar todas as perguntas e as respostas do usuário no material
+    const answers = await UserAnswer.findAll({
+      include: [{
+        model: Question,
+        where: { material_id: materialId },
+        attributes: ['id', 'enunciado', 'correct_answer']
+      }],
+      where: { user_id: user_id },
+      attributes: ['user_answer', 'is_correct'],
+      raw: true
+    });
+
+    if (!answers.length) {
+      return res.status(404).json({ message: 'Nenhuma resposta encontrada para este usuário neste material.' });
+    }
+
+    const resultado = answers.map(a => ({
+      question_id: a['Question.id'],
+      enunciado: a['Question.enunciado'],
+      resposta_correta: a['Question.correct_answer'],
+      resposta_usuario: a.user_answer,
+      acertou: a.is_correct
+    }));
+
+    return res.json({ respostas: resultado });
+  } catch (error) {
+    console.error('Erro ao obter respostas do usuário:', error);
     return res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };

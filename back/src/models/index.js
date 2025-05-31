@@ -10,6 +10,7 @@ import QuestionStatistics from './QuestionStatistics.js';
 import SavedRooms from './SavedRooms.js';
 import RoomReports from './RoomReports.js';
 import Question from './Question.js';
+import UserAnswers from './UserAnswers.js';
 
 const sequelize = new Sequelize(config.database, config.username, config.password, {
   host: config.host,
@@ -27,6 +28,7 @@ QuestionStatistics.init(sequelize);
 SavedRooms.init(sequelize);
 RoomReports.init(sequelize);
 Question.init(sequelize);
+UserAnswers.init(sequelize);
 
 // Relação entre Usuário e Sala
 User.hasMany(Room, { foreignKey: 'owner_id' });

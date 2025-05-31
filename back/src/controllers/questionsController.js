@@ -1,20 +1,70 @@
+import { Op } from 'sequelize';
 import Question from '../models/Question.js';
 import QuestionStatistics from '../models/QuestionStatistics.js';
+import UserAnswers from '../models/UserAnswers.js';
 
 // GET /perguntas/:material_id
 export const questions = async (req, res) => {
   try {
-    const result = await Question.findAll({
+    const user_id = '3cdc152f-b12d-4c67-a552-817e32d56fc7';
+      if (!user_id) {
+        throw new Error("Usuário não autenticado.");
+      }
+
+    const questions = await Question.findAll({
       where: { material_id: req.params.material_id },
-      attributes: ['id', 'question', 'type', 'options']
+      raw: true
     });
 
-    const formatted = result.map(q => ({
-      id: q.id,
-      question: q.question,
-      type: q.type,
-      options: q.options || null
-    }));
+    let answersMap = {};
+    if (user_id) {
+      const answered = await UserAnswers.findAll({
+        where: {
+          user_id,
+          question_id: { [Op.in]: questions.map(q => q.id) }
+        },
+        attributes: ['question_id', 'choose', 'is_correct'],
+        raw: true
+      });
+
+      console.log('answered', answered)
+
+      answersMap = Object.fromEntries(
+        answered.map(ans => [ans.question_id, { 
+          user_answer: ans.choose,
+          is_correct: ans.is_correct
+        }])
+      );
+    }
+
+    console.log('answersMap', answersMap)
+    console.log('questions', questions)
+
+    const formatted = questions.map(q => {
+      const user_answer = answersMap[q.id]?.user_answer || null;
+      let isCorrect = null;
+      let correctAnswer = null;
+      let explanation = q.explanation || null;
+
+      if (q.type === 'VERDADEIRO_FALSO') {
+        isCorrect = String(q.is_correct_v_f) === String(user_answer);
+        correctAnswer = q.is_correct_v_f;
+      } else if (q.type === 'MULTIPLA_ESCOLHA') {
+        isCorrect = String(q.correct_opt) === String(user_answer);
+        correctAnswer = q.correct_opt;
+      }
+
+      return {
+        id: q.id,
+        question: q.question,
+        type: q.type,
+        options: q.options || null,
+        user_answer,
+        isCorrect,
+        correctAnswer,
+        explanation
+      };
+  });
 
     res.json(formatted);
   } catch (error) {
@@ -32,7 +82,25 @@ export const checkAnswer = async (req, res) => {
       if (!question) {
         return res.status(404).json({ error: 'Questão não encontrada' });
       }
+      
+      // const user_id = req.user?.id;
+      const user_id = '3cdc152f-b12d-4c67-a552-817e32d56fc7';
+      if (!user_id) {
+        throw new Error("Usuário não autenticado.");
+      }
   
+      // Verifica se o usuário já respondeu essa pergunta
+      const alreadyAnswered = await UserAnswers.findOne({
+        where: {
+          user_id: user_id,
+          question_id: question_id
+        }
+      });
+
+      if (alreadyAnswered) {
+        return res.status(400).json({ error: 'Você já respondeu essa pergunta.' });
+      }
+
       let isCorrect = false;
       let correctAnswer = null;
       let explanation = null;
@@ -48,10 +116,6 @@ export const checkAnswer = async (req, res) => {
         isCorrect = String(correctOpt) === String(user_answer);
         correctAnswer = correctOpt;
         explanation = question.explanation || null;
-      } else if (question.type === 'EXPLICATIVA') {
-        isCorrect = null; // Avaliação manual
-        correctAnswer = null;
-        explanation = question.explanation || null;
       }
   
       let [stat] = await QuestionStatistics.findOrCreate({
@@ -66,7 +130,6 @@ export const checkAnswer = async (req, res) => {
         },
       });
       
-      // Atualizações seguras usando increment
       const increments = { total_attempts: 1 };
       
       if (isCorrect === true) {
@@ -84,6 +147,13 @@ export const checkAnswer = async (req, res) => {
       }
       
       await stat.increment(increments);
+
+      await UserAnswers.create({
+        user_id: user_id,
+        question_id,
+        choose: user_answer,
+        is_correct: isCorrect
+      });
 
       res.json({ isCorrect, correctAnswer, explanation });
   

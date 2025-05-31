@@ -8,15 +8,7 @@
           >Anterior</span>
         </div>
         
-          <div>
-            <div v-if="allQuestionsAnswered">
-            <span 
-              class="box-question_finish"
-              @click="$emit('finish')">
-              <span>Finalizar</span>
-              <i class="pi pi-check"></i>
-            </span>
-          </div>
+          <div class="box-btns-questions">
 
             <div v-if="isConfirmMode">
               <span 
@@ -29,7 +21,16 @@
             <div v-else class="box-question_next" :class="{ 'disabled': currentIndex === totalQuestions - 1 }"  @click="$emit('next')">
                 <span>Próxima</span>
                 <i class="pi pi-arrow-right" style="color: slateblue"></i>
-              </div>
+            </div>
+
+            <div v-if="allQuestionsAnswered">
+              <span
+                class="box-question_finish"
+                @click="$emit('finish')">
+                <span>Relatório</span>
+                <i class="pi pi-check"></i>
+              </span>
+          </div>
               
           </div>
        
@@ -82,6 +83,13 @@ defineEmits(['prev', 'next', 'confirm'])
   justify-content: space-between;
   padding: 0 20px;
 }
+
+.box-btns-questions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
 .box-question_confir{
   display: flex;
   align-items: center;
@@ -108,6 +116,28 @@ defineEmits(['prev', 'next', 'confirm'])
   cursor: pointer;
   border: 1px solid #ede9e9;
   transition: background-color 0.3s, transform 0.2s ease-in-out, box-shadow 0.3s ease;
+}
+.box-question_finish{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f3f3f3;
+  padding: 6px 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid #ede9e9;
+  transition: background-color 0.3s, transform 0.2s ease-in-out, box-shadow 0.3s ease;
+
+i{
+    color: #ee8523;
+  }
+}
+.box-question_finish:hover {
+  background: #ee8523;
+  color: #ffffff;
+  i{
+    color: #ffffff;
+  }
 }
 
 .box-question_prev:not(.disabled):hover, .box-question_next:not(.disabled):hover {
